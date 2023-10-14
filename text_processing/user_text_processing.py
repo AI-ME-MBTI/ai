@@ -1,6 +1,7 @@
 from nltk.tokenize import word_tokenize
 from nltk.tag import pos_tag
 from nltk.stem import WordNetLemmatizer
+from collections import Counter
 
 def get_tagged_words(text):
     tagged_list = pos_tag(word_tokenize(text))
@@ -33,3 +34,7 @@ def get_tagged_words(text):
                 final_list.remove(w)
                 
     return final_list
+
+def get_top_count(final_list):
+    count_word = Counter(final_list)
+    return count_wo
