@@ -35,6 +35,6 @@ def get_tagged_words(text):
                 
     return final_list
 
-def get_top_count(final_list):
+def get_count(final_list):
     count_word = Counter(final_list)
-    return count_wo
+    return count_word
