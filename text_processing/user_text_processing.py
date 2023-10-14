@@ -21,3 +21,15 @@ def get_tagged_words(text):
 
     filtered_list = [lm.lemmatize(w, pos=p) for w, p in new_tagged_list if p in ['v', 'n', 'a']]
     
+    from nltk.corpus import stopwords
+    
+    stopwords = stopwords.words('english')
+    filtered_set = set(filtered_list)
+    final_list = filtered_list
+
+    for w in filtered_set:
+        if w in stopwords:
+            while w in final_list:
+                final_list.remove(w)
+                
+    return final_list
