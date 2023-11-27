@@ -63,3 +63,11 @@ def train_model(mbti: pd.DataFrame):
         Model_best = grid_search.best_estimator_
     
         dump(Model_best, 'model_common_{0}.joblib'.format(i))
+        
+def user_text_to_datagrame(answer: str):
+    text = pd.DataFrame({'Text':answer})
+
+    for i in final_words:
+        text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
+    text.drop(['Text'],axis=1,inplace=True)
+    return text
