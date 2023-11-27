@@ -1,8 +1,12 @@
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi import status
 from pydantic import BaseModel
-from mbti_prediction import get_common_mbti, get_specific_mbti, train_model
+import uvicorn
+
+from common_mbti_prediction import get_common_mbti, train_model
+from specific_mbti_prediction import get_specific_mbti
+
 
 app = FastAPI()
 
@@ -22,7 +26,7 @@ def bad_request_exception(answer: str):
         )
     else:
         return
-    
+
 class Answer(BaseModel):
     answer: str
 
@@ -120,5 +124,5 @@ def get_feedback(feedback: Feedback):
         )
 
 if __name__ == "__main__":
-    app.run()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
     
