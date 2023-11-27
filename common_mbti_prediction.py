@@ -40,3 +40,26 @@ def make_mbti_dataset_df():
         
     mbti.to_csv("MBTI_words.csv")
     return mbti
+
+def train_model(mbti: pd.DataFrame):
+    Personalities = ['ISFP', 'INFP','INFJ','INTP','INT J','ENTP','ENFP','ISTP','ENTJ','ISTJ','ENFJ','ISFJ','ESTP','ESFP','ESFJ','ESTJ']
+    
+    for i in Personalities:
+        temp = mbti.copy()
+        temp['Personality Type'] = temp['Personality Type'].apply(lambda x: 1 if x==i else 0)
+        X = temp.drop('Personality Type',axis=1)
+        y = temp['Personality Type']
+        X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.7,random_state=100)
+        Model = RandomForestClassifier(n_jobs=-1,n_estimators=100, random_state=42, class_weight='balanced')
+    
+        params = {'n_estimators':[100],
+              'max_depth':[3,5,7,10,12,15],
+              'max_features':[0.05,0.1,0.15,0.2],
+              'criterion':["gini","entropy"]}
+    
+        grid_search = GridSearchCV(estimator=Model,param_grid=params,verbose=1,n_jobs=-1,scoring='accuracy')
+        grid_search.fit(X_train,y_train)
+    
+        Model_best = grid_search.best_estimator_
+    
+        dump(Model_best, 'model_common_{0}.joblib'.format(i))
