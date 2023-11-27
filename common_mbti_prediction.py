@@ -1,6 +1,8 @@
 import pandas as pd
 from collections import Counter
 import warnings
+
+from papago.papago import get_translate
 warnings.filterwarnings('ignore')
 
 from sklearn.ensemble import RandomForestClassifier
@@ -87,6 +89,7 @@ def mbti_prediction(text: pd.DataFrame):
     return ''
 
 def get_common_mbti(answer: str):
+    answer = get_translate(answer)
     user_text = user_text_to_datagrame(answer)
     mbti = mbti_prediction(user_text)
     return mbti
