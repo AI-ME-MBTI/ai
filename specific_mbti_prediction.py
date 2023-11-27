@@ -69,3 +69,21 @@ def user_text_to_datagrame(answer: str):
         text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
     text.drop(['Text'],axis=1,inplace=True)
     return text
+
+def is_contain(mbti_type: list[str], answer: str):
+    answer_list = answer.split()
+    
+    word_lists = detail.groupby('mbti')['word'].apply(list).reset_index(name='word_list')
+    
+    for i in mbti_type:
+        words = word_lists[word_lists['mbti']==i].word_list.explode().tolist()
+        
+    user_mbti = ''
+    
+    for t in answer_list:
+        if t in words:
+            user_mbti = i
+            return user_mbti
+        
+    if user_mbti == '':
+        return False
