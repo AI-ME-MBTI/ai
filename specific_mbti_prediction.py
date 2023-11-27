@@ -5,6 +5,8 @@ from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
 from joblib import dump, load
 
+from papago.papago import get_translate
+
 detail = pd.read_csv('mbti_detail_final.csv')
 all_words = detail['word'].unique()
 
@@ -87,3 +89,13 @@ def is_contain(mbti_type: list[str], answer: str):
         
     if user_mbti == '':
         return False
+
+def get_specific_mbti(type: str, answer:str):
+    answer = get_translate(answer)
+    result = is_contain(mbti_type=list(type), answer=answer)
+    
+    if not result:
+        answer_df = user_text_to_datagrame(answer)
+        result = mbti_prediction(mbti_type=list(type), answer=answer_df)
+        
+    return result
