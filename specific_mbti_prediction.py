@@ -61,3 +61,11 @@ def mbti_prediction(mbti_type: list[str], answer: pd.DateOffset):
             return i
         
     return ''
+
+def user_text_to_datagrame(answer: str):
+    text = pd.DataFrame({'Text':answer})
+
+    for i in all_words:
+        text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
+    text.drop(['Text'],axis=1,inplace=True)
+    return text
