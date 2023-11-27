@@ -41,11 +41,13 @@ def make_mbti_dataset_df():
     mbti.to_csv("MBTI_words.csv")
     return mbti
 
-def train_model(mbti: pd.DataFrame):
+mbti_words_contain = pd.read_csv('MBTI_words.csv')
+
+def train_model():
     Personalities = ['ISFP', 'INFP','INFJ','INTP','INT J','ENTP','ENFP','ISTP','ENTJ','ISTJ','ENFJ','ISFJ','ESTP','ESFP','ESFJ','ESTJ']
     
     for i in Personalities:
-        temp = mbti.copy()
+        temp = mbti_words_contain.copy()
         temp['Personality Type'] = temp['Personality Type'].apply(lambda x: 1 if x==i else 0)
         X = temp.drop('Personality Type',axis=1)
         y = temp['Personality Type']
