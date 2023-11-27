@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
-from joblib import dump
+from joblib import dump, load
 
 detail = pd.read_csv('mbti_detail_final.csv')
 all_words = detail['word'].unique()
@@ -51,3 +51,13 @@ def user_text_to_datagrame(answer: str):
         text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
     text.drop(['Text'],axis=1,inplace=True)
     return text
+
+def mbti_prediction(mbti_type: list[str], answer: pd.DateOffset):
+    for i in mbti_type:
+        model_best = load('model_detail_{0}.joblib'.format(i))
+        user_pred = model_best.predict(answer)
+    
+        if user_pred == [1]:
+            return i
+        
+    return ''
