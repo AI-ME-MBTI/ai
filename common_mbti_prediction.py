@@ -83,3 +83,11 @@ def mbti_prediction(text: pd.DataFrame):
             return i
     
     return ''
+
+def get_common_mbti(answer: str):
+    user_text = user_text_to_datagrame(answer)
+    mbti = mbti_prediction(user_text)
+    return mbti
+
+def train_model(mbti: str, answer: str):
+    return True
