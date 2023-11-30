@@ -69,7 +69,7 @@ def train_model():
         dump(Model_best, 'model_common_{0}.joblib'.format(i))
         
 def user_text_to_datagrame(answer: str):
-    text = pd.DataFrame({'Text':answer})
+    text = pd.DataFrame({'Text':[answer]})
 
     for i in final_words:
         text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
@@ -97,13 +97,17 @@ def get_common_mbti(answer: str):
 def common_train_model(mbti: str, answer: list[str]):
     personalities = ['ISFP', 'INFP','INFJ','INTP','INT J','ENTP','ENFP','ISTP','ENTJ','ISTJ','ENFJ','ISFJ','ESTP','ESFP','ESFJ','ESTJ']
     
-    for p in personalities:
-        answer_df = user_text_to_datagrame(answer)
-        model_best = load('model_common_{0}.joblib'.format(p))
-        if p == mbti:
-            model_best.fit(answer_df, 1)
-        else:
-            model_best.fit(answer_df, 0)
+    answer_df = user_text_to_datagrame(answer)
+    
+    try:
+        for p in personalities:
+            model_best = load('model_common_{0}.joblib'.format(p))
+            if p == mbti:
+                model_best.fit(answer_df, 1)
+            else:
+                model_best.fit(answer_df, 0)
             
-        dump(model_best, 'model_common_{0}.joblib'.format(i))
-    return True
+            dump(model_best, 'model_common_{0}.joblib'.format(i))
+        return True
+    except:
+        return False
