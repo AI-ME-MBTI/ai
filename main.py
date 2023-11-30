@@ -4,8 +4,8 @@ from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import get_common_mbti, train_model
-from specific_mbti_prediction import get_specific_mbti
+from common_mbti_prediction import common_train_model, get_common_mbti
+from specific_mbti_prediction import get_specific_mbti, specific_train_model
 
 
 app = FastAPI()
@@ -34,9 +34,14 @@ class MbtiAnswer(BaseModel):
     mbti_type: str
     answer: str
     
+class DetailAnswer(BaseModel):
+    detail_mbti: str
+    answer: str
+
 class Feedback(BaseModel):
     mbti: str
-    answer: str
+    common_answer: str
+    detail_answer: list(DetailAnswer)
     
 @app.post("/answer/common")
 def get_common_answer(user_answer: Answer):
@@ -97,15 +102,17 @@ def get_specific_answer(user_answer: MbtiAnswer):
 
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
-    is_success = train_model(feedback.mbti, feedback.answer)
+    common_is_success = common_train_model(feedback.mbti, [feedback.common_answer])
     
-    if is_success:
+    specific_is_success = specific_train_model(feedback.detail_answer)
+    
+    if common_is_success & specific_is_success:
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
                 "statusCode": 201,
                 "data": {
-                    "message": ['정상적으로 데이터가 전송됐습니다.'], 
+                    "message": ['정상적으로 데이터가 훈련됐습니다.'], 
                     "mbti": feedback.mbti,
                     "answer": feedback.answer
                 }
