@@ -65,7 +65,7 @@ def mbti_prediction(mbti_type: list[str], answer: pd.DateOffset):
     return ''
 
 def user_text_to_datagrame(answer: str):
-    text = pd.DataFrame({'Text':answer})
+    text = pd.DataFrame({'Text':[answer]})
 
     for i in all_words:
         text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
@@ -99,3 +99,22 @@ def get_specific_mbti(type: str, answer:str):
         result = mbti_prediction(mbti_type=list(type), answer=answer_df)
         
     return result
+
+def specific_train_model(user_answer):
+    type = ['I', 'E', 'S', 'N', 'F', 'T', 'P', 'J']
+    
+    answer_df = user_text_to_datagrame(user_answer.answer)
+    
+    try:
+        for t in type:
+            model_best = load('model_detail_{0}.joblib'.format(t))
+            if t == user_answer.detail_mbti:
+                model_best.fit(answer_df, 1)
+            else:
+                model_best.fit(answer_df, 0)
+            
+            dump(model_best, 'model_detail_{0}.joblib'.format(t))
+        return True
+    except:
+        return False
+    
