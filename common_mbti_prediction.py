@@ -1,98 +1,87 @@
-import pandas as pd
-from collections import Counter
-import warnings
-
 from papago.papago import get_translate
-warnings.filterwarnings('ignore')
 
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
-
+from sklearn.metrics import accuracy_score
+from sklearn.feature_extraction.text import TfidfVectorizer
 from joblib import dump, load
 
-mbti = pd.read_csv('mbti_all.csv')
-
-mbti_pred = mbti.sample(frac=0.1)
-
-def get_final_words():
-    words = list()
-    for i in list(mbti_pred['posts']):
-        for j in i.split(' '):
-            words.append(j)
-        
-    words_dic = Counter(words)
-    words_dic = pd.DataFrame({'Word':list(words_dic.keys()),'Frequency':list(words_dic.values())})
-    words_dic.sort_values('Frequency',ascending=False,inplace=True)
-    words_dic.set_index('Word',inplace=True)
-
-    words_dic.to_csv('words_select.csv')
-
-    quan_max = words_dic['Frequency'].quantile(0.99)
-    words_dic = words_dic[words_dic.Frequency>quan_max]
-    final_words = list(words_dic.index)
-    
-    return final_words
-
-final_words = get_final_words()
-
-def make_mbti_dataset_df():
-    for i in final_words:
-        mbti[i] = mbti['posts'].apply(lambda x: 1 if  i in x.split(' ') else 0)
-    mbti.drop(['Length','posts'],axis=1,inplace=True)
-        
-    mbti.to_csv("MBTI_words.csv")
-    return mbti
-
-mbti_words_contain = pd.read_csv('MBTI_words.csv')
+# 전체 데이터셋 중 0.1 %만 데려와서 사용
+mbti = pd.read_csv('MBTI_sample.csv')
 
 def train_model():
-    Personalities = ['ISFP', 'INFP','INFJ','INTP','INT J','ENTP','ENFP','ISTP','ENTJ','ISTJ','ENFJ','ISFJ','ESTP','ESFP','ESFJ','ESTJ']
-    
-    for i in Personalities:
-        temp = mbti_words_contain.copy()
-        temp['Personality Type'] = temp['Personality Type'].apply(lambda x: 1 if x==i else 0)
-        X = temp.drop('Personality Type',axis=1)
-        y = temp['Personality Type']
-        X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=0.7,random_state=100)
-        Model = RandomForestClassifier(n_jobs=-1,n_estimators=100, random_state=42, class_weight='balanced')
-    
-        params = {'n_estimators':[100],
-              'max_depth':[3,5,7,10,12,15],
-              'max_features':[0.05,0.1,0.15,0.2],
-              'criterion':["gini","entropy"]}
-    
-        grid_search = GridSearchCV(estimator=Model,param_grid=params,verbose=1,n_jobs=-1,scoring='accuracy')
-        grid_search.fit(X_train,y_train)
-    
-        Model_best = grid_search.best_estimator_
-    
-        dump(Model_best, 'model_common_{0}.joblib'.format(i))
+    try:
+        X = mbti['posts']
+        y = mbti['type']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        vectorizer = TfidfVectorizer()
+        X_train_tfidf = vectorizer.fit_transform(X_train)
+        X_test_tfidf = vectorizer.transform(X_test)
         
-def user_text_to_datagrame(answer: str):
-    text = pd.DataFrame({'Text':answer})
+        dump(vectorizer, 'vectorizer_text.joblib')
 
-    for i in final_words:
-        text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
-    text.drop(['Text'],axis=1,inplace=True)
-    return text
+        model = RandomForestClassifier(n_jobs=-1,n_estimators=100, random_state=42, class_weight='balanced')
 
-def mbti_prediction(text: pd.DataFrame):
-    personalities = ['ISFP', 'INFP','INFJ','INTP','INT J','ENTP','ENFP','ISTP','ENTJ','ISTJ','ENFJ','ISFJ','ESTP','ESFP','ESFJ','ESTJ']
+        params = {'n_estimators':[100],
+                    'max_depth':[3,5,7,10,12,15],
+                    'max_features':[0.05,0.1,0.15,0.2],
+                    'criterion':["gini","entropy"]}
+
+        grid_search = GridSearchCV(estimator=model,param_grid=params,verbose=1,n_jobs=-1,scoring='accuracy')
+        grid_search.fit(X_train_tfidf,y_train)
+
+        model_best = grid_search.best_estimator_
+
+        y_train_pred = model_best.predict(X_train_tfidf)
+        y_test_pred = model_best.predict(X_test_tfidf)
+
+        dump(grid_search, 'model_common_mbti.joblib')
+
+        print('Train Accuracy:', accuracy_score(y_train, y_train_pred))
+        print('Test Accuracy :',accuracy_score(y_test,y_test_pred))
+
+        return True
+    except:
+        return False
     
-    for i in personalities:
-        model_best = load('model_common_{0}.joblib'.format(i))
-        user_pred = model_best.predict(text)
+def extra_train_model(answer: str, user_mbti: str):
+    try:
+        vectorizer = load('vectorizer_text.joblib')
+        train_tfidf = vectorizer.fit_transform([answer])
+        
+        grid_search = load('model_common_mbti.joblib')
+        grid_search.fit(train_tfidf, user_mbti)
+        
+        dump(vectorizer, 'vectorizer_text.joblib')
+        dump(grid_search, 'model_common_mbti.joblib')
+        return True
+    except:
+        return False
+
+def mbti_prediction(answer: str):
+    vectorizer = load('vectorizer_text.joblib')
+    answer_tfidf = vectorizer.transform([answer])
     
-        if user_pred == [1]:
-            return i
+    grid_search = load('model_common_mbti.joblib')
     
-    return ''
+    model_best = grid_search.best_estimator_
+    user_pred = model_best.predict(answer_tfidf)
+    user_pred = ''.join(user_pred)
+    
+    return user_pred
 
 def get_common_mbti(answer: str):
-    answer = get_translate(answer)
-    user_text = user_text_to_datagrame(answer)
-    mbti = mbti_prediction(user_text)
+    kr_answer = get_translate(answer)
+    mbti = mbti_prediction(kr_answer)
     return mbti
 
-def train_model(mbti: str, answer: str):
-    return True
+def train_model(user_mbti: str, answer: str):
+    is_success = extra_train_model(answer, user_mbti)
+    
+    if is_success:
+        return True
+    else:
+        return False
+    
