@@ -119,6 +119,10 @@ def get_feedback(feedback: Feedback):
             }
         )
 
+@app.get('/')
+def healthCheck():
+    return 'health'
+
 if __name__ == "__main__":
     app.run()
     
