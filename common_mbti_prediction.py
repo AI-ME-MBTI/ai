@@ -76,12 +76,4 @@ def get_common_mbti(answer: str):
     kr_answer = get_translate(answer)
     mbti = mbti_prediction(kr_answer)
     return mbti
-
-def train_model(user_mbti: str, answer: str):
-    is_success = extra_train_model(answer, user_mbti)
-    
-    if is_success:
-        return True
-    else:
-        return False
     
