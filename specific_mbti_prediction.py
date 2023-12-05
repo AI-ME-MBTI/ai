@@ -44,7 +44,7 @@ def get_specific_mbti(mbti_type: str, answer:str):
     result = mbti_train_and_prediction(mbti_type, kr_answer)
     return result
 
-def get_feedbackf(user_feedback):
+def make_feedback_df(user_feedback):
     mbti_name = {"I": "IE", "E": "IE", "S": "SN", "N": "SN", "T": "TF", "F": "TF", "P": "PJ", "J":"PJ"}
     
     for data in user_feedback:
@@ -78,3 +78,6 @@ def extra_train_specific_model():
         
             joblib.dump(vectorizer, './models/vectorizer_detail_text.joblib')
             pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(m)), 'wb')
+        else:
+            return False
+        
