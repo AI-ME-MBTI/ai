@@ -47,12 +47,14 @@ def train_model():
     except:
         return False
     
-def make_feedback_df(user_answer: str, user_mbti: str):
+def make_common_feedback_df(user_answer: str, user_mbti: str):
+    eng_answer = get_translate(user_answer)
+    
     if not os.path.exists('./feedback/common/common_feedback.csv'):
-        feedback_df = pd.DataFrame({'posts': [user_answer], 'type': user_mbti})
+        feedback_df = pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})
     else:
         feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
-        feedback_df = feedback_df.append({'posts': user_answer, 'type': user_mbti})
+        feedback_df = feedback_df.append({'posts': eng_answer, 'type': user_mbti}, ignore_index=True)
         
     feedback_df.to_csv('./feedback/common/common_feedback.csv')
     
@@ -99,4 +101,3 @@ def train_model(user_mbti: str, answer: str):
         return True
     else:
         return False
-    

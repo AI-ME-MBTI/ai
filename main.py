@@ -5,8 +5,8 @@ from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import extra_train_model, get_common_mbti, make_feedback_df
-from specific_mbti_prediction import extra_train_specific_model, make_feedback_df, get_specific_mbti
+from common_mbti_prediction import extra_train_model, get_common_mbti, make_common_feedback_df
+from specific_mbti_prediction import extra_train_specific_model, make_detail_feedback_df, get_specific_mbti
 
 
 app = FastAPI()
@@ -61,7 +61,8 @@ def get_common_answer(user_answer: Answer):
             }
         )
     
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
@@ -104,9 +105,8 @@ def get_specific_answer(user_answer: MbtiAnswer):
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
     try:
-        make_feedback_df(feedback.mbti, feedback.common_answer)
-        make_feedback_df(feedback.detail_answer)
-        
+        make_common_feedback_df(feedback.common_answer, feedback.mbti)
+        make_detail_feedback_df(feedback.detail_answer)
         
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
@@ -120,7 +120,8 @@ def get_feedback(feedback: Feedback):
             }
         )
         
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
@@ -177,4 +178,3 @@ def extra_train():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-    
