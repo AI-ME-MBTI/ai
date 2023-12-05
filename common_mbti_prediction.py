@@ -54,7 +54,7 @@ def make_common_feedback_df(user_answer: str, user_mbti: str):
         feedback_df = pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})
     else:
         feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
-        feedback_df = feedback_df.append({'posts': eng_answer, 'type': user_mbti}, ignore_index=True)
+        feedback_df = pd.concat([feedback_df, pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})], ignore_index=True)
         
     feedback_df.to_csv('./feedback/common/common_feedback.csv')
     

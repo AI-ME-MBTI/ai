@@ -113,9 +113,7 @@ def get_feedback(feedback: Feedback):
             content={
                 "statusCode": 201,
                 "data": {
-                    "message": ['피드백 데이터를 정상적으로 저장했습니다.'], 
-                    "mbti": feedback.mbti,
-                    "answer": feedback.answer
+                    "message": ['피드백 데이터를 정상적으로 저장했습니다.']
                 }
             }
         )
