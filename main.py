@@ -1,8 +1,13 @@
+from typing import List
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import status
 from pydantic import BaseModel
-from mbti_prediction import get_common_mbti, get_specific_mbti, train_model
+import uvicorn
+
+from common_mbti_prediction import extra_train_model, get_common_mbti, make_common_feedback_df
+from specific_mbti_prediction import extra_train_specific_model, make_detail_feedback_df, get_specific_mbti
+
 
 app = FastAPI()
 
@@ -22,7 +27,7 @@ def bad_request_exception(answer: str):
         )
     else:
         return
-    
+
 class Answer(BaseModel):
     answer: str
 
@@ -30,10 +35,15 @@ class MbtiAnswer(BaseModel):
     mbti_type: str
     answer: str
     
+class DetailAnswer(BaseModel):
+    detail_mbti: str
+    answer: str
+
 class Feedback(BaseModel):
     mbti: str
-    answer: str
-    
+    common_answer: str
+    detail_answer: List[DetailAnswer]
+
 @app.post("/answer/common")
 def get_common_answer(user_answer: Answer):
     bad_request_exception(user_answer.answer)
@@ -51,7 +61,8 @@ def get_common_answer(user_answer: Answer):
             }
         )
     
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
@@ -93,28 +104,72 @@ def get_specific_answer(user_answer: MbtiAnswer):
 
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
-    is_success = train_model(feedback.mbti, feedback.answer)
-    
-    if is_success:
+    try:
+        make_common_feedback_df(feedback.common_answer, feedback.mbti)
+        make_detail_feedback_df(feedback.detail_answer)
+        
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
                 "statusCode": 201,
                 "data": {
-                    "message": ['정상적으로 데이터가 전송됐습니다.'], 
-                    "mbti": feedback.mbti,
-                    "answer": feedback.answer
+                    "message": ['피드백 데이터를 정상적으로 저장했습니다.']
                 }
             }
         )
         
-    else:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
                 "statusCode": 500,
                 "data": {
-                    "message": [ '모델을 훈련시키는데 실패했습니다.']
+                    "message": [ '피드백 데이터를 저장하는 데 실패했습니다.']
+                }
+            }
+        )
+        
+@app.post('/train')
+def extra_train():
+    try:
+        common_is_successed = extra_train_model()
+        detail_is_successed = extra_train_specific_model()
+
+        if not common_is_successed:
+            return JSONResponse(
+                content={
+                    "data": {
+                        "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                    }
+                }
+            )
+        
+        if not detail_is_successed:
+            return JSONResponse(
+                content={
+                    "data": {
+                        "message": [ '세부 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                    }
+                }
+            )
+            
+        return JSONResponse(
+                status_code=status.HTTP_201_CREATED, 
+                content={
+                    "statusCode": 201,
+                    "data": {
+                        "message": ['피드백 데이터를 정상적으로 훈련시켰습니다.']
+                    }
+                }
+            )
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            content={
+                "statusCode": 500,
+                "data": {
+                    "message": [ '피드백 데이터를 훈련하는 데 실패했습니다.']
                 }
             }
         )
@@ -124,5 +179,4 @@ def healthCheck():
     return 'health'
 
 if __name__ == "__main__":
-    app.run()
-    
+    uvicorn.run(app, host="0.0.0.0", port=8000)
