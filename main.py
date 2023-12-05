@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from typing import List
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import common_train_model, extra_train_model, get_common_mbti
-from specific_mbti_prediction import get_specific_mbti, specific_train_model
+from common_mbti_prediction import get_common_mbti
+from specific_mbti_prediction import get_feedbackf, get_specific_mbtiodel
 
 
 app = FastAPI()
@@ -41,8 +42,8 @@ class DetailAnswer(BaseModel):
 class Feedback(BaseModel):
     mbti: str
     common_answer: str
-    detail_answer: list(DetailAnswer)
-    
+    detail_answer: List[DetailAnswer]
+
 @app.post("/answer/common")
 def get_common_answer(user_answer: Answer):
     bad_request_exception(user_answer.answer)
@@ -103,8 +104,7 @@ def get_specific_answer(user_answer: MbtiAnswer):
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
     common_is_success = extra_train_model(feedback.mbti, [feedback.common_answer])
-    
-    specific_is_success = specific_train_model(feedback.detail_answer)
+    specific_is_success = get_feedbackf(feedback.detail_answer)
     
     if common_is_success & specific_is_success:
         return JSONResponse(
@@ -112,7 +112,7 @@ def get_feedback(feedback: Feedback):
             content={
                 "statusCode": 201,
                 "data": {
-                    "message": ['정상적으로 데이터가 훈련됐습니다.'], 
+                    "message": ['피드백 데이터를 정상적으로 저장했습니다.'], 
                     "mbti": feedback.mbti,
                     "answer": feedback.answer
                 }
@@ -125,7 +125,7 @@ def get_feedback(feedback: Feedback):
             content={
                 "statusCode": 500,
                 "data": {
-                    "message": [ '모델을 훈련시키는데 실패했습니다.']
+                    "message": [ '피드백 데이터를 저장하는 데 실패했습니다.']
                 }
             }
         )

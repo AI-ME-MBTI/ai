@@ -1,101 +1,80 @@
 import pandas as pd
+import os
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-
-from joblib import dump, load
+from sklearn.metrics import accuracy_score
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import LinearSVC
+import pickle
+import joblib
 
 from papago.papago import get_translate
 
-detail = pd.read_csv('mbti_detail_final.csv')
-all_words = detail['word'].unique()
+detail_mbti = pd.read_csv('./csv/mbti_detail_data.csv')
 
-def make_grouped_mbti():
-    grouped = detail.groupby('mbti')['word'].apply(lambda x: ' '.join(x)).reset_index(name='word_list')
+def mbti_train_and_prediction(mbti_type: str, answer: str):
+    type_to_index = {"IE": 0, "SF": 2, "FT": 4, "PJ": 6}
     
-    for i in all_words:
-        grouped[i] = grouped['word_list'].apply(lambda x: 1 if i in x.split() else 0)
-    grouped.drop(['word_list'], axis=1, inplace=True)
+    i = type_to_index[mbti_type]
+    mbti = detail_mbti[i:i+2]
     
-    return grouped
+    X = mbti['word']
+    y = mbti['mbti']
+    
+    vectorizer = TfidfVectorizer()
+    X_train_tfidf = vectorizer.fit_transform(X)
+    joblib.dump(vectorizer, './models/vectorizer_detail_text.sav')
 
-def train_model():
-    grouped = make_grouped_mbti()
-    personalities = ['I', 'E',  'S', 'N', 'T', 'F', 'J', 'P']
-    
-    for i in personalities:
-        temp = grouped.copy()
-        temp['mbti'] = temp['mbti'].apply(lambda x: 1 if x==i else 0)
-        X = temp.drop('mbti',axis=1)
-        y = temp['mbti']
-    
-        model = RandomForestClassifier(n_jobs=-1,n_estimators=100, random_state=42, class_weight='balanced')
-    
-        params = {'n_estimators':[100],
-              'max_depth':[3,5,7,10,12,15],
-              'max_features':['auto', 'log2', None],
-              'criterion':["gini","entropy"]}
-    
-        grid_search = GridSearchCV(estimator=model,param_grid=params,verbose=1,n_jobs=-1,scoring='accuracy', cv=StratifiedKFold(n_splits=3))
-        
-        grid_search.fit(X,y)
-    
-        Model_best = grid_search.best_estimator_
-    
-        dump(Model_best, 'model_detail_{0}.joblib'.format(i))
-    
-# train_model()
-    
-def user_text_to_datagrame(answer: str):
-    text = pd.DataFrame({'Text':answer})
+    X_test = answer
 
-    for i in all_words:
-        text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
-    text.drop(['Text'],axis=1,inplace=True)
-    return text
+    clf = LinearSVC()
+    clf.fit(X_train_tfidf, y)
+    pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(mbti_type), 'wb'))
 
-def mbti_prediction(mbti_type: list[str], answer: pd.DateOffset):
-    for i in mbti_type:
-        model_best = load('model_detail_{0}.joblib'.format(i))
-        user_pred = model_best.predict(answer)
-    
-        if user_pred == [1]:
-            return i
-        
-    return ''
+    y_train_pred = clf.predict(X_train_tfidf)
+    print("Train Accuracy:", accuracy_score(y, y_train_pred))
 
-def user_text_to_datagrame(answer: str):
-    text = pd.DataFrame({'Text':answer})
+    X_test_tfidf = vectorizer.transform([X_test])
+    y_test_pred = clf.predict(X_test_tfidf)
+    y_test_pred = ''.join(y_test_pred)
+    
+    return y_test_pred
 
-    for i in all_words:
-        text[i] = text['Text'].apply(lambda x: 1 if i in x.split(' ') else 0)
-    text.drop(['Text'],axis=1,inplace=True)
-    return text
-
-def is_contain(mbti_type: list[str], answer: str):
-    answer_list = answer.split()
-    
-    word_lists = detail.groupby('mbti')['word'].apply(list).reset_index(name='word_list')
-    
-    for i in mbti_type:
-        words = word_lists[word_lists['mbti']==i].word_list.explode().tolist()
-        
-    user_mbti = ''
-    
-    for t in answer_list:
-        if t in words:
-            user_mbti = i
-            return user_mbti
-        
-    if user_mbti == '':
-        return False
-
-def get_specific_mbti(type: str, answer:str):
-    answer = get_translate(answer)
-    result = is_contain(mbti_type=list(type), answer=answer)
-    
-    if not result:
-        answer_df = user_text_to_datagrame(answer)
-        result = mbti_prediction(mbti_type=list(type), answer=answer_df)
-        
+def get_specific_mbti(mbti_type: str, answer:str):
+    kr_answer = get_translate(answer)
+    result = mbti_train_and_prediction(mbti_type, kr_answer)
     return result
+
+def get_feedbackf(user_feedback):
+    mbti_name = {"I": "IE", "E": "IE", "S": "SN", "N": "SN", "T": "TF", "F": "TF", "P": "PJ", "J":"PJ"}
+    
+    for data in user_feedback:
+        mbti = data.detail_mbti
+        answer = data.answer
+        
+        if not os.path.exists('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti])):
+            feedback_df = pd.DataFrame({'word': [answer], 'mbti': mbti})
+        else:
+            feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
+            
+            feedback_df = feedback_df.append({'word': answer, 'mbti': mbti}, ignore_index=True)
+            
+    feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
+
+def extra_train_specific_model():
+    mbti_type = ['IE', 'SN', 'TF', 'PJ']
+    
+    for m in mbti_type:
+        feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(m))
+    
+        if len(feedback_df) >= 3:
+            X = feedback_df['word']
+            y = feedback_df['mbti']
+        
+            vectorizer = joblib.load('./models/vectorizer_detail_text.sav')
+            clf = pickle.load(open('./models/model_detail_mbti_{0}.sav'.format(m), 'rb'))
+        
+            X_train_tfidf = vectorizer.fit_transform(X)
+            clf.fit(X_train_tfidf, y)
+        
+            joblib.dump(vectorizer, './models/vectorizer_detail_text.joblib')
+            pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(m)), 'wb')
