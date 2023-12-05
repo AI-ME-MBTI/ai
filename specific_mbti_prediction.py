@@ -66,7 +66,7 @@ def extra_train_specific_model():
     for m in mbti_type:
         feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(m))
     
-        if len(feedback_df) >= 1:
+        if len(feedback_df) >= 3:
             X = feedback_df['word']
             y = feedback_df['mbti']
         
