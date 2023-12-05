@@ -1,11 +1,12 @@
+from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import get_common_mbti, train_model
-from specific_mbti_prediction import get_specific_mbti
+from common_mbti_prediction import extra_train_model, get_common_mbti
+from specific_mbti_prediction import extra_train_specific_model, get_feedbackf, get_specific_mbti
 
 
 app = FastAPI()
@@ -99,13 +100,14 @@ def get_specific_answer(user_answer: MbtiAnswer):
 def get_feedback(feedback: Feedback):
     is_success = train_model(feedback.mbti, feedback.answer)
     
-    if is_success:
+    specific_is_success = get_feedbackf(feedback.detail_answer)
+    if specific_is_success:
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
                 "statusCode": 201,
                 "data": {
-                    "message": ['정상적으로 데이터가 전송됐습니다.'], 
+                    "message": ['피드백 데이터를 정상적으로 저장했습니다.'], 
                     "mbti": feedback.mbti,
                     "answer": feedback.answer
                 }
@@ -118,7 +120,7 @@ def get_feedback(feedback: Feedback):
             content={
                 "statusCode": 500,
                 "data": {
-                    "message": [ '모델을 훈련시키는데 실패했습니다.']
+                    "message": [ '피드백 데이터를 저장하는 데 실패했습니다.']
                 }
             }
         )
