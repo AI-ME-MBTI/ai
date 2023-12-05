@@ -78,3 +78,6 @@ def extra_train_specific_model():
         
             joblib.dump(vectorizer, './models/vectorizer_detail_text.joblib')
             pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(m)), 'wb')
+        else:
+            return False
+        
