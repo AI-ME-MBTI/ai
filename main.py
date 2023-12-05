@@ -5,8 +5,8 @@ from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import get_common_mbti
-from specific_mbti_prediction import get_feedbackf, get_specific_mbtiodel
+from common_mbti_prediction import get_common_mbti, make_feedback_df
+from specific_mbti_prediction import get_feedbackf, get_specific_mbti
 
 
 app = FastAPI()
@@ -103,10 +103,9 @@ def get_specific_answer(user_answer: MbtiAnswer):
 
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
-    common_is_success = extra_train_model(feedback.mbti, [feedback.common_answer])
-    specific_is_success = get_feedbackf(feedback.detail_answer)
-    
-    if common_is_success & specific_is_success:
+    try:
+        make_feedback_df(feedback.mbti, feedback.common_answer)
+        get_feedbackf(feedback.detail_answer)
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
@@ -119,7 +118,7 @@ def get_feedback(feedback: Feedback):
             }
         )
         
-    else:
+    except:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
@@ -129,6 +128,10 @@ def get_feedback(feedback: Feedback):
                 }
             }
         )
+        
+@app.post('/train')
+def train(feedback: Feedback):
+        
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
