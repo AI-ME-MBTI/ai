@@ -5,8 +5,8 @@ from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import get_common_mbti, make_feedback_df
-from specific_mbti_prediction import get_feedbackf, get_specific_mbti
+from common_mbti_prediction import extra_train_model, get_common_mbti, make_feedback_df
+from specific_mbti_prediction import extra_train_specific_model, get_feedbackf, get_specific_mbti
 
 
 app = FastAPI()
@@ -106,6 +106,8 @@ def get_feedback(feedback: Feedback):
     try:
         make_feedback_df(feedback.mbti, feedback.common_answer)
         get_feedbackf(feedback.detail_answer)
+        
+        
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
@@ -130,8 +132,27 @@ def get_feedback(feedback: Feedback):
         )
         
 @app.post('/train')
-def train(feedback: Feedback):
+def extra_train():
+    common_is_successed = extra_train_model()
+
+    if not common_is_successed:
+        return JSONResponse(
+            content={
+                "data": {
+                    "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                }
+            }
+        )
         
+    return JSONResponse(
+            status_code=status.HTTP_201_CREATED, 
+            content={
+                "statusCode": 201,
+                "data": {
+                    "message": ['피드백 데이터를 정상적으로 훈련시켰습니다.']
+                }
+            }
+        )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
