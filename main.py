@@ -5,8 +5,8 @@ from fastapi import status
 from pydantic import BaseModel
 import uvicorn
 
-from common_mbti_prediction import get_common_mbti
-from specific_mbti_prediction import get_feedbackf, get_specific_mbtiodel
+from common_mbti_prediction import extra_train_model, get_common_mbti, make_feedback_df
+from specific_mbti_prediction import extra_train_specific_model, get_feedbackf, get_specific_mbti
 
 
 app = FastAPI()
@@ -103,10 +103,11 @@ def get_specific_answer(user_answer: MbtiAnswer):
 
 @app.post('/feedback')
 def get_feedback(feedback: Feedback):
-    common_is_success = extra_train_model(feedback.mbti, [feedback.common_answer])
-    specific_is_success = get_feedbackf(feedback.detail_answer)
-    
-    if common_is_success & specific_is_success:
+    try:
+        make_feedback_df(feedback.mbti, feedback.common_answer)
+        get_feedbackf(feedback.detail_answer)
+        
+        
         return JSONResponse(
             status_code=status.HTTP_201_CREATED, 
             content={
@@ -119,13 +120,36 @@ def get_feedback(feedback: Feedback):
             }
         )
         
-    else:
+    except:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
                 "statusCode": 500,
                 "data": {
                     "message": [ '피드백 데이터를 저장하는 데 실패했습니다.']
+                }
+            }
+        )
+        
+@app.post('/train')
+def extra_train():
+    common_is_successed = extra_train_model()
+
+    if not common_is_successed:
+        return JSONResponse(
+            content={
+                "data": {
+                    "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                }
+            }
+        )
+        
+    return JSONResponse(
+            status_code=status.HTTP_201_CREATED, 
+            content={
+                "statusCode": 201,
+                "data": {
+                    "message": ['피드백 데이터를 정상적으로 훈련시켰습니다.']
                 }
             }
         )

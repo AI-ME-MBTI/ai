@@ -6,9 +6,10 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from joblib import dump, load
+import os
 
 # 전체 데이터셋 중 0.1 %만 데려와서 사용
-mbti = pd.read_csv('MBTI_sample.csv')
+mbti = pd.read_csv('./csv/MBTI_sample.csv')
 
 def train_model():
     try:
@@ -20,7 +21,7 @@ def train_model():
         X_train_tfidf = vectorizer.fit_transform(X_train)
         X_test_tfidf = vectorizer.transform(X_test)
         
-        dump(vectorizer, 'vectorizer_text.joblib')
+        dump(vectorizer, './models/vectorizer_text.joblib')
 
         model = RandomForestClassifier(n_jobs=-1,n_estimators=100, random_state=42, class_weight='balanced')
 
@@ -37,7 +38,7 @@ def train_model():
         y_train_pred = model_best.predict(X_train_tfidf)
         y_test_pred = model_best.predict(X_test_tfidf)
 
-        dump(grid_search, 'model_common_mbti.joblib')
+        dump(grid_search, './models/model_common_mbti.joblib')
 
         print('Train Accuracy:', accuracy_score(y_train, y_train_pred))
         print('Test Accuracy :',accuracy_score(y_test,y_test_pred))
@@ -46,25 +47,39 @@ def train_model():
     except:
         return False
     
-def extra_train_model(answer: str, user_mbti: str):
-    try:
-        vectorizer = load('vectorizer_text.joblib')
-        train_tfidf = vectorizer.fit_transform([answer])
+def make_feedback_df(user_answer: str, user_mbti: str):
+    if not os.path.exists('./feedback/common/common_feedback.csv'):
+        feedback_df = pd.DataFrame({'posts': [user_answer], 'type': user_mbti})
+    else:
+        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+        feedback_df = feedback_df.append({'posts': user_answer, 'type': user_mbti})
         
-        grid_search = load('model_common_mbti.joblib')
-        grid_search.fit(train_tfidf, user_mbti)
+    feedback_df.to_csv('./feedback/common/common_feedback.csv')
+    
+def extra_train_model():
+    feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+    
+    if len(feedback_df) >= 3:
+        X = feedback_df['posts']
+        y = feedback_df['type']
         
-        dump(vectorizer, 'vectorizer_text.joblib')
-        dump(grid_search, 'model_common_mbti.joblib')
-        return True
-    except:
+        vectorizer = load('./models/vectorizer_text.joblib')
+        train_tfidf = vectorizer.fit_transform(X)
+    
+        grid_search = load('./models/model_common_mbti.joblib')
+        grid_search.fit(train_tfidf, y)
+    
+        dump(vectorizer, './models/vectorizer_text.joblib')
+        dump(grid_search, './models/model_common_mbti.joblib')
+    
+    else:
         return False
 
 def mbti_prediction(answer: str):
-    vectorizer = load('vectorizer_text.joblib')
+    vectorizer = load('./models/vectorizer_text.joblib')
     answer_tfidf = vectorizer.transform([answer])
     
-    grid_search = load('model_common_mbti.joblib')
+    grid_search = load('./models/model_common_mbti.joblib')
     
     model_best = grid_search.best_estimator_
     user_pred = model_best.predict(answer_tfidf)
@@ -76,4 +91,12 @@ def get_common_mbti(answer: str):
     kr_answer = get_translate(answer)
     mbti = mbti_prediction(kr_answer)
     return mbti
+
+def train_model(user_mbti: str, answer: str):
+    is_success = extra_train_model(answer, user_mbti)
+    
+    if is_success:
+        return True
+    else:
+        return False
     
