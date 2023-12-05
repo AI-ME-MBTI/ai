@@ -56,18 +56,23 @@ def make_feedback_df(user_answer: str, user_mbti: str):
         
     feedback_df.to_csv('./feedback/common/common_feedback.csv')
     
-def extra_train_model(answer: str, user_mbti: str):
-    try:
+def extra_train_model():
+    feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+    
+    if len(feedback_df) >= 3:
+        X = feedback_df['posts']
+        y = feedback_df['type']
+        
         vectorizer = load('./models/vectorizer_text.joblib')
-        train_tfidf = vectorizer.fit_transform([answer])
-        
+        train_tfidf = vectorizer.fit_transform(X)
+    
         grid_search = load('./models/model_common_mbti.joblib')
-        grid_search.fit(train_tfidf, user_mbti)
-        
+        grid_search.fit(train_tfidf, y)
+    
         dump(vectorizer, './models/vectorizer_text.joblib')
         dump(grid_search, './models/model_common_mbti.joblib')
-        return True
-    except:
+    
+    else:
         return False
 
 def mbti_prediction(answer: str):
