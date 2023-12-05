@@ -35,10 +35,15 @@ class MbtiAnswer(BaseModel):
     mbti_type: str
     answer: str
     
+class DetailAnswer(BaseModel):
+    detail_mbti: str
+    answer: str
+
 class Feedback(BaseModel):
     mbti: str
-    answer: str
-    
+    common_answer: str
+    detail_answer: List[DetailAnswer]
+
 @app.post("/answer/common")
 def get_common_answer(user_answer: Answer):
     bad_request_exception(user_answer.answer)
