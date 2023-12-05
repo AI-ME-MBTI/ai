@@ -6,7 +6,7 @@ from pydantic import BaseModel
 import uvicorn
 
 from common_mbti_prediction import extra_train_model, get_common_mbti, make_feedback_df
-from specific_mbti_prediction import extra_train_specific_model, get_feedbackf, get_specific_mbti
+from specific_mbti_prediction import extra_train_specific_model, make_feedback_df, get_specific_mbti
 
 
 app = FastAPI()
@@ -105,7 +105,7 @@ def get_specific_answer(user_answer: MbtiAnswer):
 def get_feedback(feedback: Feedback):
     try:
         make_feedback_df(feedback.mbti, feedback.common_answer)
-        get_feedbackf(feedback.detail_answer)
+        make_feedback_df(feedback.detail_answer)
         
         
         return JSONResponse(
