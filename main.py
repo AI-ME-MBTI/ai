@@ -133,33 +133,44 @@ def get_feedback(feedback: Feedback):
         
 @app.post('/train')
 def extra_train():
-    common_is_successed = extra_train_model()
-    detail_is_successed = extra_train_specific_model()
+    try:
+        common_is_successed = extra_train_model()
+        detail_is_successed = extra_train_specific_model()
 
-    if not common_is_successed:
-        return JSONResponse(
-            content={
-                "data": {
-                    "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+        if not common_is_successed:
+            return JSONResponse(
+                content={
+                    "data": {
+                        "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                    }
                 }
-            }
-        )
-    
-    if not detail_is_successed:
-        return JSONResponse(
-            content={
-                "data": {
-                    "message": [ '세부 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
-                }
-            }
-        )
+            )
         
-    return JSONResponse(
-            status_code=status.HTTP_201_CREATED, 
+        if not detail_is_successed:
+            return JSONResponse(
+                content={
+                    "data": {
+                        "message": [ '세부 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                    }
+                }
+            )
+            
+        return JSONResponse(
+                status_code=status.HTTP_201_CREATED, 
+                content={
+                    "statusCode": 201,
+                    "data": {
+                        "message": ['피드백 데이터를 정상적으로 훈련시켰습니다.']
+                    }
+                }
+            )
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             content={
-                "statusCode": 201,
+                "statusCode": 500,
                 "data": {
-                    "message": ['피드백 데이터를 정상적으로 훈련시켰습니다.']
+                    "message": [ '피드백 데이터를 훈련하는 데 실패했습니다.']
                 }
             }
         )
