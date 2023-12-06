@@ -45,7 +45,7 @@ def get_specific_mbti(mbti_type: str, answer:str):
     return result
 
 def make_detail_feedback_df(user_feedback):
-    mbti_name = {"I": "IE", "E": "IE", "S": "SN", "N": "SN", "T": "TF", "F": "TF", "P": "PJ", "J":"PJ"}
+    mbti_name = {"I": "IE", "E": "IE", "S": "SN", "N": "SN", "T": "FT", "F": "FT", "P": "PJ", "J":"PJ"}
     
     for data in user_feedback:
         mbti = data.detail_mbti
@@ -57,10 +57,10 @@ def make_detail_feedback_df(user_feedback):
             feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
             feedback_df = pd.concat([feedback_df, pd.DataFrame({'word': [answer], 'mbti': mbti})], ignore_index=True)
             
-    feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
+        feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
 
 def extra_train_specific_model():
-    mbti_type = ['IE', 'SN', 'TF', 'PJ']
+    mbti_type = ['IE', 'SN', 'FT', 'PJ']
     
     for m in mbti_type:
         feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(m))
