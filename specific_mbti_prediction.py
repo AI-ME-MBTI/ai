@@ -57,7 +57,7 @@ def make_detail_feedback_df(user_feedback):
             feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
             feedback_df = pd.concat([feedback_df, pd.DataFrame({'word': [answer], 'mbti': mbti})], ignore_index=True)
             
-    feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
+        feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
 
 def extra_train_specific_model():
     mbti_type = ['IE', 'SN', 'FT', 'PJ']
