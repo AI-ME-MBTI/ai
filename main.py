@@ -43,6 +43,9 @@ class Feedback(BaseModel):
     mbti: str
     common_answer: str
     detail_answer: List[DetailAnswer]
+    
+class TrainType(BaseModel):
+    mbti_type: str # ['IE', 'SN', 'FT', 'PJ']
 
 @app.post("/answer/common")
 def get_common_answer(user_answer: Answer):
@@ -129,27 +132,33 @@ def get_feedback(feedback: Feedback):
                 }
             }
         )
-        
+
 @app.post('/train')
-def extra_train():
+def extra_train(train_type: TrainType):
     try:
-        common_is_successed = extra_train_model()
-        detail_is_successed = extra_train_specific_model()
+        common_is_successed, common_counts = extra_train_model()
+        detail_is_successed, detail_counts = extra_train_specific_model(train_type.mbti_type)
 
         if not common_is_successed:
             return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 content={
+                    "statusCode": 422,
                     "data": {
-                        "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                        "message": [ '일반 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.'],
+                        "dataLength": common_counts
                     }
                 }
             )
-        
+ 
         if not detail_is_successed:
             return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 content={
+                    "statusCode": 422,
                     "data": {
-                        "message": [ '세부 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.']
+                        "message": [ '세부 질문 피드백 데이터가 적어 아직 훈련할 수 없습니다.'],
+                        "dataLength": detail_counts
                     }
                 }
             )
