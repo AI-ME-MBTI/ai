@@ -22,7 +22,7 @@ def mbti_train_and_prediction(mbti_type: str, answer: str):
     
     vectorizer = TfidfVectorizer()
     X_train_tfidf = vectorizer.fit_transform(X)
-    joblib.dump(vectorizer, './models/vectorizer_detail_text.sav')
+    joblib.dump(vectorizer, './models/vectorizer_detail_text.joblib')
 
     X_test = answer
 
@@ -59,23 +59,28 @@ def make_detail_feedback_df(user_feedback):
             
         feedback_df.to_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_name[mbti]))
 
-def extra_train_specific_model():
-    mbti_type = ['IE', 'SN', 'FT', 'PJ']
+def extra_train_specific_model(mbti_type: str):
     
-    for m in mbti_type:
-        feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(m))
-    
+    if os.path.exists('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_type)):
+        feedback_df = pd.read_csv('./feedback/detail/detail_feedback_{0}.csv'.format(mbti_type))
+        
         if len(feedback_df) >= 3:
             X = feedback_df['word']
             y = feedback_df['mbti']
         
-            vectorizer = joblib.load('./models/vectorizer_detail_text.sav')
-            clf = pickle.load(open('./models/model_detail_mbti_{0}.sav'.format(m), 'rb'))
+            vectorizer = joblib.load('./models/vectorizer_detail_text.joblib')
+            clf = pickle.load(open('./models/model_detail_mbti_{0}.sav'.format(mbti_type), 'rb'))
         
             X_train_tfidf = vectorizer.fit_transform(X)
             clf.fit(X_train_tfidf, y)
         
             joblib.dump(vectorizer, './models/vectorizer_detail_text.joblib')
-            pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(m)), 'wb')
+            pickle.dump(clf, open('./models/model_detail_mbti_{0}.sav'.format(mbti_type), 'wb'))
+            
+            return True, len(feedback_df)
         else:
-            return False
+            return False, len(feedback_df)
+    
+    else:
+        return False, 0
+    

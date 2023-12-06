@@ -8,7 +8,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from joblib import dump, load
 import os
 
-# 전체 데이터셋 중 0.1 %만 데려와서 사용
 mbti = pd.read_csv('./csv/MBTI_sample.csv')
 
 def train_model():
@@ -59,23 +58,28 @@ def make_common_feedback_df(user_answer: str, user_mbti: str):
     feedback_df.to_csv('./feedback/common/common_feedback.csv')
     
 def extra_train_model():
-    feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
-    
-    if len(feedback_df) >= 3:
-        X = feedback_df['posts']
-        y = feedback_df['type']
+    if os.path.exists('./feedback/common/common_feedback.csv'):
+        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
         
-        vectorizer = load('./models/vectorizer_text_re.joblib')
-        train_tfidf = vectorizer.fit_transform(X)
-    
-        grid_search = load('./models/model_common_mbti_all.joblib')
-        grid_search.fit(train_tfidf, y)
-    
-        dump(vectorizer, './models/vectorizer_text_re.joblib')
-        dump(grid_search, './models/model_common_mbti_all.joblib')
+        if len(feedback_df) >= 5:
+            X = feedback_df['posts']
+            y = feedback_df['type']
+            
+            vectorizer = load('./models/vectorizer_text_re.joblib')
+            train_tfidf = vectorizer.fit_transform(X)
+        
+            grid_search = load('./models/model_common_mbti_all.joblib')
+            grid_search.fit(train_tfidf, y)
+        
+            dump(vectorizer, './models/vectorizer_text_re.joblib')
+            dump(grid_search, './models/model_common_mbti_all.joblib')
+            
+            return True, len(feedback_df)
+        else:
+            return False, len(feedback_df)
     
     else:
-        return False
+        return False, 0
 
 def mbti_prediction(answer: str):
     vectorizer = load('./models/vectorizer_text_re.joblib')
@@ -93,11 +97,3 @@ def get_common_mbti(answer: str):
     kr_answer = get_translate(answer)
     mbti = mbti_prediction(kr_answer)
     return mbti
-
-def train_model(user_mbti: str, answer: str):
-    is_success = extra_train_model(answer, user_mbti)
-    
-    if is_success:
-        return True
-    else:
-        return False
