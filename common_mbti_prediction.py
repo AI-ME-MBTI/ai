@@ -65,23 +65,23 @@ def extra_train_model():
         X = feedback_df['posts']
         y = feedback_df['type']
         
-        vectorizer = load('./models/vectorizer_text.joblib')
+        vectorizer = load('./models/vectorizer_text_re.joblib')
         train_tfidf = vectorizer.fit_transform(X)
     
-        grid_search = load('./models/model_common_mbti.joblib')
+        grid_search = load('./models/model_common_mbti_all.joblib')
         grid_search.fit(train_tfidf, y)
     
-        dump(vectorizer, './models/vectorizer_text.joblib')
-        dump(grid_search, './models/model_common_mbti.joblib')
+        dump(vectorizer, './models/vectorizer_text_re.joblib')
+        dump(grid_search, './models/model_common_mbti_all.joblib')
     
     else:
         return False
 
 def mbti_prediction(answer: str):
-    vectorizer = load('./models/vectorizer_text.joblib')
+    vectorizer = load('./models/vectorizer_text_re.joblib')
     answer_tfidf = vectorizer.transform([answer])
     
-    grid_search = load('./models/model_common_mbti.joblib')
+    grid_search = load('./models/model_common_mbti_all.joblib')
     
     model_best = grid_search.best_estimator_
     user_pred = model_best.predict(answer_tfidf)
