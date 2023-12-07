@@ -8,8 +8,21 @@ import uvicorn
 from common_mbti_prediction import extra_train_model, get_common_mbti, make_common_feedback_df
 from specific_mbti_prediction import extra_train_specific_model, make_detail_feedback_df, get_specific_mbti
 
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "https://ai-me-fc625.web.app/"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # @app.exception_handler()
 def bad_request_exception(answer: str):
