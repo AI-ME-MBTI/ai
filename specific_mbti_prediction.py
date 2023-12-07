@@ -12,7 +12,7 @@ from papago.papago import get_translate
 detail_mbti = pd.read_csv('./csv/mbti_detail_data.csv')
 
 def mbti_train_and_prediction(mbti_type: str, answer: str):
-    type_to_index = {"IE": 0, "SF": 2, "FT": 4, "PJ": 6}
+    type_to_index = {"IE": 0, "SN": 2, "FT": 4, "PJ": 6}
     
     i = type_to_index[mbti_type]
     mbti = detail_mbti[i:i+2]
