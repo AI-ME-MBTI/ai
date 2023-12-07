@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    "https://ai-me-fc625.web.app/"
+    "https://ai-me-fc625.web.app"
 ]
 
 app.add_middleware(
