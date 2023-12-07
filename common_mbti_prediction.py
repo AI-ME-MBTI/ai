@@ -71,8 +71,8 @@ def extra_train_model():
             grid_search = load('./models/model_common_mbti_all.joblib')
             grid_search.fit(train_tfidf, y)
         
-            dump(vectorizer, './models/vectorizer_text_re.joblib')
-            dump(grid_search, './models/model_common_mbti_all.joblib')
+            dump(vectorizer, './models/vectorizer_text_1207.joblib')
+            dump(grid_search, './models/model_common_mbti_1207.joblib')
             
             return True, len(feedback_df)
         else:
@@ -82,10 +82,10 @@ def extra_train_model():
         return False, 0
 
 def mbti_prediction(answer: str):
-    vectorizer = load('./models/vectorizer_text_re.joblib')
+    vectorizer = load('./models/vectorizer_text_1207.joblib')
     answer_tfidf = vectorizer.transform([answer])
     
-    grid_search = load('./models/model_common_mbti_all.joblib')
+    grid_search = load('./models/model_common_mbti_1207.joblib')
     
     model_best = grid_search.best_estimator_
     user_pred = model_best.predict(answer_tfidf)
