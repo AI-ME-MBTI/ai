@@ -1,9 +1,21 @@
 import requests
 
-def get_translate(text):
-    client_id = "7_cQNb0IcQESwQSmBcGC" # <-- client_id
-    client_secret = "_LAfYCrqWe" # <-- client_secret 
+from starlette.config import Config
+from dotenv import load_dotenv
 
+load_dotenv()
+
+config = Config("./.env")
+CLIENT_ID_SI = config.get('CLIENT_ID_SI')
+CLIENT_SECRET_SI = config.get('CLIENT_SECRET_SI')
+
+CLIENT_ID_HS = config.get('CLIENT_ID_HS')
+CLIENT_SECRET_HS = config.get('CLIENT_SECRET_HS')
+
+import requests
+
+def get_translate(text, client_id = CLIENT_ID_SI, client_secret=CLIENT_SECRET_SI):
+    
     data = {'text' : text,
             'source' : 'ko',
             'target': 'en'}
@@ -21,3 +33,4 @@ def get_translate(text):
         return trans_data
     else:
         print("Error Code:" , rescode)
+        get_translate(text, CLIENT_ID_HS,CLIENT_SECRET_SI)

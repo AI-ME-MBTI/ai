@@ -2,3 +2,4 @@ __pycache__
 mbti_all.csv
 venv
 desktop.ini
+.env
