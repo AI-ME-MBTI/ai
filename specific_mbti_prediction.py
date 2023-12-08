@@ -7,7 +7,8 @@ from sklearn.svm import LinearSVC
 import pickle
 import joblib
 
-from papago.papago import get_translate
+from translate import get_translate
+
 
 detail_mbti = pd.read_csv('./csv/mbti_detail_data.csv')
 
