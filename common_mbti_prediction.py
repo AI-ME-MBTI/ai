@@ -1,4 +1,4 @@
-from papago.papago import get_translate
+
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -7,6 +7,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from joblib import dump, load
 import os
+
+from translate import get_translate
 
 mbti = pd.read_csv('./csv/MBTI_sample.csv')
 
