@@ -51,17 +51,17 @@ def train_model():
 def make_common_feedback_df(user_answer: str, user_mbti: str):
     eng_answer = get_translate(user_answer)
     
-    if not os.path.exists('./feedback/common/common_feedback.csv'):
+    if not os.path.exists('./feedback/common/common_feedback_1209.csv'):
         feedback_df = pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})
     else:
-        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+        feedback_df = pd.read_csv('./feedback/common/common_feedback_1209.csv')
         feedback_df = pd.concat([feedback_df, pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})], ignore_index=True)
         
-    feedback_df.to_csv('./feedback/common/common_feedback.csv')
+    feedback_df.to_csv('./feedback/common/common_feedback_1209.csv')
     
 def extra_train_model():
-    if os.path.exists('./feedback/common/common_feedback.csv'):
-        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+    if os.path.exists('./feedback/common/common_feedback_1209.csv'):
+        feedback_df = pd.read_csv('./feedback/common/common_feedback_1209.csv')
         
         if len(feedback_df) >= 5:
             X = feedback_df['posts']
