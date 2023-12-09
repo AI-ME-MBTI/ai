@@ -13,4 +13,5 @@ def get_translate(text):
     translator = deepl.Translator(auth_key)
 
     result = translator.translate_text(text, target_lang="EN-US")
-    return result
+    print(result)
+    return str(result)
