@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -51,17 +49,17 @@ def train_model():
 def make_common_feedback_df(user_answer: str, user_mbti: str):
     eng_answer = get_translate(user_answer)
     
-    if not os.path.exists('./feedback/common/common_feedback.csv'):
+    if not os.path.exists('./feedback/common/common_feedback_1210.csv'):
         feedback_df = pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})
     else:
-        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+        feedback_df = pd.read_csv('./feedback/common/common_feedback_1210.csv')
         feedback_df = pd.concat([feedback_df, pd.DataFrame({'posts': [eng_answer], 'type': user_mbti})], ignore_index=True)
         
-    feedback_df.to_csv('./feedback/common/common_feedback.csv')
+    feedback_df.to_csv('./feedback/common/common_feedback_1210.csv')
     
 def extra_train_model():
-    if os.path.exists('./feedback/common/common_feedback.csv'):
-        feedback_df = pd.read_csv('./feedback/common/common_feedback.csv')
+    if os.path.exists('./feedback/common/common_feedback_1210.csv'):
+        feedback_df = pd.read_csv('./feedback/common/common_feedback_1209.csv')
         
         if len(feedback_df) >= 5:
             X = feedback_df['posts']
@@ -73,8 +71,8 @@ def extra_train_model():
             grid_search = load('./models/model_common_mbti_1207.joblib')
             grid_search.fit(train_tfidf, y)
         
-            dump(vectorizer, './models/vectorizer_text_1208.joblib')
-            dump(grid_search, './models/model_common_mbti_1208.joblib')
+            dump(vectorizer, './models/vectorizer_text_1210.joblib')
+            dump(grid_search, './models/model_common_mbti_1210.joblib')
             
             return True, len(feedback_df)
         else:
@@ -84,10 +82,10 @@ def extra_train_model():
         return False, 0
 
 def mbti_prediction(answer: str):
-    vectorizer = load('./models/vectorizer_text_1208.joblib')
+    vectorizer = load('./models/vectorizer_text_1210.joblib')
     answer_tfidf = vectorizer.transform([answer])
     
-    grid_search = load('./models/model_common_mbti_1208.joblib')
+    grid_search = load('./models/model_common_mbti_1210.joblib')
     
     model_best = grid_search.best_estimator_
     user_pred = model_best.predict(answer_tfidf)
